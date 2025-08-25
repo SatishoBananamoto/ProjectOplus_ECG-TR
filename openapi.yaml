@@ -1,0 +1,137 @@
+openapi: 3.0.3
+info:
+  title: ProjectOplus_EGC-TR API
+  version: 1.0.0
+  description: API for the EGC + TR engine, stabilizing IoT workloads.
+paths:
+  /tr/optimize:
+    post:
+      summary: Run EGC + TR optimization on IoT system
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [entities, cycle_length, cycle_phases, target_state]
+              properties:
+                entities:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id: {type: string}
+                      state: {type: number}
+                      stable_states: {type: array, items: {type: number}}
+                cycle_length: {type: integer}
+                cycle_phases: {type: integer}
+                target_state: {type: number}
+                noise_coefficient: {type: number}
+                priorities: {type: array, items: {type: object}}
+      responses:
+        '200':
+          description: Optimized system state
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: {type: boolean}
+                  final_state:
+                    type: object
+                    properties:
+                      entities: {type: array, items: {type: object, properties: {id: {type: string}, state: {type: number}}}}
+                      ledger: {type: object, properties: {excess_credit: {type: number}, next_cycle_id: {type: integer}}}
+        '400': {description: Invalid input}
+        '500': {description: Execution failed}
+  /tr/simulate:
+    post:
+      summary: Simulate IoT testbed with EGC + TR
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/SystemInput'}
+      responses:
+        '200':
+          description: Simulation results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  control: {type: object, properties: {latency: {type: number}, failures: {type: integer}, energy: {type: number}}}
+                  tr: {type: object, properties: {latency: {type: number}, failures: {type: integer}, energy: {type: number}}}
+        '400': {description: Invalid input}
+        '500': {description: Simulation failed}
+  /tr/natural:
+    post:
+      summary: Natural language optimization query
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                query: {type: string}
+      responses:
+        '200':
+          description: Natural language response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  explanation: {type: string}
+                  data: {type: object}
+        '400': {description: Missing query}
+  /tr/visualize:
+    post:
+      summary: Visualize simulation results
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/SimulationOutput'}
+      responses:
+        '200':
+          description: Plotly chart JSON
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  chart: {type: string}
+        '400': {description: Invalid input}
+components:
+  schemas:
+    SystemInput:
+      type: object
+      properties:
+        entities:
+          type: array
+          items:
+            type: object
+            properties:
+              id: {type: string}
+              state: {type: number}
+              stable_states: {type: array, items: {type: number}}
+        cycle_length: {type: integer}
+        cycle_phases: {type: integer}
+        target_state: {type: number}
+    SimulationOutput:
+      type: object
+      properties:
+        control:
+          type: object
+          properties:
+            latency: {type: number}
+            failures: {type: integer}
+            energy: {type: number}
+        tr:
+          type: object
+          properties:
+            latency: {type: number}
+            failures: {type: integer}
+            energy: {type: number}
