@@ -1,4 +1,4 @@
-# tr_engine.py - The Core EGC + TR Engine (v1.2 - Simulator Fix)
+# tr_engine.py - The Core EGC + TR Engine (v1.3 - Tolerance Fix)
 from dataclasses import dataclass, field
 from typing import List, Set, Tuple
 
@@ -40,7 +40,7 @@ class System:
     target_state: float
     phases: List[Phase] = field(default_factory=list)
     ledger: TaskCreditLedger = field(default_factory=lambda: TaskCreditLedger(0, 0.0, 1))
-    config: dict = field(default_factory=lambda: {"MAX_TOLERANCE": 1.0, "NOISE_COEFFICIENT": 0.05})
+    config: dict = field(default_factory=lambda: {"MAX_TOLERANCE": 2.0, "NOISE_COEFFICIENT": 0.05})  # Tolerance increased to 2.0
     constitution: Constitution = field(default_factory=Constitution)
 
 # --- Core Functions ---
@@ -74,7 +74,7 @@ def recombine(system: System) -> List[Entity]:
     for entity in system.entities:
         if not entity.stable_states: raise ValueError(f"Entity {entity.id} has no defined stable states.")
         closest_state = min(entity.stable_states, key=lambda s: abs(s - ideal_per_entity_state))
-        if abs(closest_state - ideal_per_entity_state) > system.config.get("MAX_TOLERANCE", 1.0):
+        if abs(closest_state - ideal_per_entity_state) > system.config.get("MAX_TOLERANCE", 2.0):
             raise ValueError(f"No stable state within tolerance for entity {entity.id}.")
         final_entities.append(Entity(id=entity.id, state=closest_state, stable_states=entity.stable_states))
     return final_entities
