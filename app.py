@@ -1,18 +1,14 @@
-# app.py - The Flask Demo Application (v1.1 - Final Demo Version)
+# app.py - The Flask Demo Application (v1.2 - Final with Webpage Route)
 from flask import Flask, request, jsonify, render_template
 from tr_engine import System, Entity, Cycle, TaskCreditLedger, Constitution, TR_execute
 import logging
-import random
-
-# In a real app, you would import the validated tr_engine
-# For this guide, ensure tr_engine.py is in the same directory.
 
 app = Flask(__name__)
 logging.basicConfig(level=logging.INFO)
 
 @app.route('/')
 def home():
-    """Serves the main demo page."""
+    """Serves the main demo page from the templates folder."""
     return render_template('index.html')
 
 @app.route('/tr/optimize', methods=['POST'])
@@ -58,8 +54,5 @@ def optimize_system():
         logging.error(f"Error: {str(e)}")
         return jsonify({"error": str(e)}), 400
 
-# Note: The /tr/simulate and /tr/visualize endpoints will be used for the full Eclipse IoT demo.
-# The basic optimize endpoint is sufficient for our first local test.
-
 if __name__ == '__main__':
-    app.run(debug=True, port=5001)
+    app.run(host='0.0.0.0', port=5001)
