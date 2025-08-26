@@ -1,4 +1,4 @@
-# tr_engine.py - The Core EGC + TR Engine (v1.5 - Syntax Fix)
+# tr_engine.py - The Core EGC + TR Engine (v1.6 - Syntax Fix)
 from dataclasses import dataclass, field
 from typing import List, Set, Tuple
 
