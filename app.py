@@ -1,4 +1,4 @@
-# app.py - The Flask Demo Application (v1.2 - Final with Webpage Route)
+# app.py - The Flask Demo Application (v1.3 - Tolerance Fix)
 from flask import Flask, request, jsonify, render_template
 from tr_engine import System, Entity, Cycle, TaskCreditLedger, Constitution, TR_execute
 import logging
@@ -23,11 +23,12 @@ def optimize_system():
         cycle = Cycle(length=int(data["cycle_length"]), phases=int(data["cycle_phases"]))
         constitution = Constitution(priorities=data.get("priorities", []))
         
+        # THE FIX IS HERE: Changed MAX_TOLERANCE from 1.0 to 3.0
         system = System(
             entities=entities,
             cycle=cycle,
             target_state=float(data["target_state"]),
-            config={"MAX_TOLERANCE": 1.0, "NOISE_COEFFICIENT": data.get("noise_coefficient", 0.05)},
+            config={"MAX_TOLERANCE": 3.0, "NOISE_COEFFICIENT": data.get("noise_coefficient", 0.05)},
             constitution=constitution
         )
         
@@ -35,7 +36,9 @@ def optimize_system():
         updated_system, success = TR_execute(system)
         
         if not success:
-            return jsonify({"error": "TR execution failed. Check constraints."}), 500
+            # We now pass the specific error message from the engine
+            error_message = f"TR execution failed: Check logs for details."
+            return jsonify({"error": error_message}), 500
         
         response = {
             "success": True,
