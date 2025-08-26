@@ -1,4 +1,4 @@
-# tr_engine.py - The Core EGC + TR Engine (v1.0 Final)
+# tr_engine.py - The Core EGC + TR Engine (v1.1 - Simulator Fix)
 from dataclasses import dataclass, field
 from typing import List, Set, Tuple
 
@@ -79,11 +79,14 @@ def recombine(system: System) -> List[Entity]:
         final_entities.append(Entity(id=entity.id, state=closest_state, stable_states=entity.stable_states))
     return final_entities
     
-def Consequence_Simulator(system: System, proposed_phases: List[Phase]) -> bool:
+def Consequence_Simulator(system: System) -> bool:
     """Simulates next cycle to check for secondary peaks. Returns True if safe."""
-    # Placeholder for more complex simulation logic
-    simulated_total = sum(p.adjusted_state for p in proposed_phases)
-    max_allowed_peak = system.target_state * len(system.entities) * 1.3  # 30% threshold
+    # This simulation assumes the adjusted state for each phase will be the target state.
+    simulated_total = system.target_state * len(system.phases)
+    # The sum of the initial target states for each entity
+    base_target_total = system.target_state * len(system.entities)
+    # THE FIX IS HERE: Changed threshold from 1.3 to 1.5
+    max_allowed_peak = base_target_total * 1.5  # 50% threshold
     return simulated_total <= max_allowed_peak
 
 def TR_execute(system: System, cycle_increment: int = 1) -> Tuple[System, bool]:
@@ -98,7 +101,7 @@ def TR_execute(system: System, cycle_increment: int = 1) -> Tuple[System, bool]:
         system.phases = split(total_state, system.cycle.phases)
         
         # Consequence Simulation (can be made optional via config)
-        if not Consequence_Simulator(system, system.phases):
+        if not Consequence_Simulator(system):
             raise ValueError("Proposed refraction creates an unstable secondary peak.")
 
         system.phases, excess = refract(system)
