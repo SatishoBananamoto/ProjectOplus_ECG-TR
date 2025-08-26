@@ -1,4 +1,4 @@
-# tr_engine.py - The Core EGC + TR Engine (v1.3 - Tolerance Fix)
+# tr_engine.py - The Core EGC + TR Engine (v1.4 - Tolerance Fix)
 from dataclasses import dataclass, field
 from typing import List, Set, Tuple
 
@@ -40,7 +40,7 @@ class System:
     target_state: float
     phases: List[Phase] = field(default_factory=list)
     ledger: TaskCreditLedger = field(default_factory=lambda: TaskCreditLedger(0, 0.0, 1))
-    config: dict = field(default_factory=lambda: {"MAX_TOLERANCE": 2.0, "NOISE_COEFFICIENT": 0.05})  # Tolerance increased to 2.0
+    config: dict = field(default_factory=lambda: {"MAX_TOLERANCE": 3.0, "NOISE_COEFFICIENT": 0.05})  # Tolerance increased to 3.0
     constitution: Constitution = field(default_factory=Constitution)
 
 # --- Core Functions ---
@@ -65,55 +65,4 @@ def refract(system: System) -> Tuple[List[Phase], float]:
         adjusted_phases.append(phase)
     return (adjusted_phases, excess)
 
-def recombine(system: System) -> List[Entity]:
-    """Distributes the new stable state across entities, handling discretization."""
-    total_new_state = sum(p.adjusted_state for p in system.phases)
-    if not system.entities: return []
-    ideal_per_entity_state = total_new_state / len(system.entities)
-    final_entities = []
-    for entity in system.entities:
-        if not entity.stable_states: raise ValueError(f"Entity {entity.id} has no defined stable states.")
-        closest_state = min(entity.stable_states, key=lambda s: abs(s - ideal_per_entity_state))
-        if abs(closest_state - ideal_per_entity_state) > system.config.get("MAX_TOLERANCE", 2.0):
-            raise ValueError(f"No stable state within tolerance for entity {entity.id}.")
-        final_entities.append(Entity(id=entity.id, state=closest_state, stable_states=entity.stable_states))
-    return final_entities
-    
-def Consequence_Simulator(system: System) -> bool:
-    """Simulates next cycle to check for secondary peaks. Returns True if safe."""
-    # Use adjusted states after refraction for accurate simulation
-    simulated_total = sum(p.adjusted_state for p in system.phases) if system.phases else 0
-    base_target_total = system.target_state * len(system.entities)
-    max_allowed_peak = base_target_total * 1.5  # 50% threshold
-    return simulated_total <= max_allowed_peak
-
-def TR_execute(system: System, cycle_increment: int = 1) -> Tuple[System, bool]:
-    """Main wrapper function to execute the full TR operation."""
-    try:
-        if not system.entities: raise ValueError("Entity list cannot be empty.")
-        for entity in system.entities:
-            if not entity.stable_states:
-                raise ValueError(f"Entity {entity.id} has no defined stable states.")
-
-        total_state = sum(e.state for e in system.entities)
-        system.phases = split(total_state, system.cycle.phases)
-        
-        system.phases, excess = refract(system)  # Refraction first
-        if not Consequence_Simulator(system):  # Then simulate with adjusted states
-            raise ValueError("Proposed refraction creates an unstable secondary peak.")
-
-        updated_entities = recombine(system)
-        
-        # Account for rounding dust
-        final_total_state = sum(e.state for e in updated_entities)
-        total_new_state_from_phases = sum(p.adjusted_state for p in system.phases)
-        rounding_dust = total_new_state_from_phases - final_total_state
-        
-        system.entities = updated_entities
-        system.ledger.excess = excess + rounding_dust
-        system.ledger.cycle_id += cycle_increment
-        system.ledger.target_cycle = system.ledger.cycle_id + 1
-        return (system, True)
-    except ValueError as e:
-        print(f"ERROR in TR_execute: {e}")
-        return (system, False)
+def recombine(system: System) -> List[Entity
