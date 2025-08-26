@@ -1,4 +1,4 @@
-# tr_engine.py - The Core EGC + TR Engine (v1.6 - Diagnostic Version)
+# tr_engine.py - The Core EGC + TR Engine (v1.7 - Final Debug)
 from dataclasses import dataclass, field
 from typing import List, Set, Tuple
 
@@ -89,11 +89,14 @@ def recombine(system: System) -> List[Entity]:
     
 def Consequence_Simulator(system: System) -> bool:
     """Simulates next cycle to check for secondary peaks. Returns True if safe."""
-    simulated_total = sum(p.adjusted_state for p in system.phases) if system.phases else 0
+    # The total state after recombining will be the target state times the number of phases.
+    simulated_total_new_state = system.target_state * system.cycle.phases
+    # The sum of the initial target states for each entity
     base_target_total = system.target_state * len(system.entities)
+    # The threshold for a safe peak is 1.5x the base target total.
     max_allowed_peak = base_target_total * 1.5
-    print(f"[DEBUG] Simulator: Simulated Total ({simulated_total}) <= Max Allowed ({max_allowed_peak})?")
-    return simulated_total <= max_allowed_peak
+    print(f"[DEBUG] Simulator: Simulated New State Total ({simulated_total_new_state}) <= Max Allowed Peak ({max_allowed_peak})?")
+    return simulated_total_new_state <= max_allowed_peak
 
 def TR_execute(system: System, cycle_increment: int = 1) -> Tuple[System, bool]:
     """Main wrapper function to execute the full TR operation."""
